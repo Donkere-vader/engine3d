@@ -69,17 +69,24 @@ class Player:
 
     def shoot_rays(self):
         image = [
-            ["." for _2 in range([RAYS[0]])] for _ in range(RAYS[1])
+            ["." for _2 in range(RAYS[0])] for _ in range(RAYS[1])
         ]  # matrix of shape (RAYS[1], RAYS[0])
 
+        y_ray_gap = self.fov // RAYS[1]
+        x_ray_gap = self.fov // RAYS[0]
+
+        print("\n\n\n\n")
+
         for y in range(RAYS[1]):
+            y_angle = y_ray_gap * y + (y_ray_gap / 2)
             for x in range(RAYS[0]):
-                pass
+                x_angle = x_ray_gap * x + (x_ray_gap / 2)
+                image[y][x] = "#" if self.ray(x_angle, y_angle) else "."
 
         return image
 
-    def ray(self, angle):
-        pass
+    def ray(self, x_angle, y_angle):
+        return True
 
     def draw(self):
         image = self.shoot_rays()
@@ -101,7 +108,6 @@ class Player:
                         (y + 1) * row_height_px,
                     )
                 )
-
 
     def __repr__(self):
         return f"<Player @ {(self.x,  self.y, self.z)} OO ({self.looking})>"
