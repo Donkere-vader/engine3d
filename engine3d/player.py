@@ -75,12 +75,17 @@ class Player:
         y_ray_gap = self.fov // RAYS[1]
         x_ray_gap = self.fov // RAYS[0]
 
-        print("\n\n\n\n")
-
         for y in range(RAYS[1]):
             y_angle = y_ray_gap * y + (y_ray_gap / 2)
             for x in range(RAYS[0]):
                 x_angle = x_ray_gap * x + (x_ray_gap / 2)
+
+                # correct for fov
+                fov_margin = (180 - self.fov) / 2
+
+                x_angle = x_angle + fov_margin
+                y_angle = y_angle + fov_margin
+
                 image[y][x] = "#" if self.ray(x_angle, y_angle) else "."
 
         return image
