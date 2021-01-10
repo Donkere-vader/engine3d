@@ -15,11 +15,13 @@ class Game:
         self.run = True
 
         # player
-        self.player = Player(0, 0, 0)
-        self.fov = 70
+        self.player = Player(self, 0, 0, 0)
 
         # world
         self.world = World("room")
+
+        # control
+        self.keys_down = []
 
     def start(self):
         self.setup()
@@ -33,7 +35,7 @@ class Game:
                     self.run = False
                 else:
                     self.event(event)
-            
+
             delta_time = self.last_time - dt.now()
 
             self.update(delta_time)
@@ -42,14 +44,19 @@ class Game:
             pygame.display.update()
 
             self.last_time = dt.now()
-    
+
     def event(self, e):
         if e.type in self.player.events:
             self.player.event(e)
 
+        if e.type == pygame.KEYDOWN:
+            self.keys_down.append(e.key)
+        if e.type == pygame.KEYUP:
+            if e.key in self.keys_down:
+                self.keys_down.remove(e.key)
+
     def update(self, delta_time):
         self.player.update(delta_time)
-        print(self.player.looking)
 
     def draw(self):
-        pass
+        self.player.draw()

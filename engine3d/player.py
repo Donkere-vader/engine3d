@@ -1,4 +1,7 @@
+from .config import RAYS, SCREEN_WIDTH, SCREEN_HEIGHT
 import pygame
+import math
+
 
 class Movement:
     up = "up"
@@ -17,59 +20,88 @@ MOVEMENT = Movement()
 
 
 class Player:
-    def __init__(self, x, y, z):
+    speed = 1
+    events = [pygame.MOUSEMOTION]
+    fov = 90
+
+    def __init__(self, parent, x, y, z):
+        self.game = parent
         self.x, self.y, self.z = (x, y, z)
         self.looking = [0, 0]
-        self.change_x = self.change_y = 0
-        self.movement_queue = []
-
-        self.events = [pygame.K_w, pygame.K_s, pygame.K_a,  pygame.K_d, pygame.K_SPACE, pygame.K_LCTRL, pygame.MOUSEMOTION]
+        self.change_x = self.change_y = self.change_z = 0
 
     def event(self, e):
-        if e.type == pygame.K_w:
-            self.movement_queue.append(MOVEMENT.forward)
-        elif e.type == pygame.K_s:
-            self.movement_queue.append(MOVEMENT.backward)
-        elif e.type == pygame.K_a:
-            self.movement_queue.append(MOVEMENT.left)
-        elif e.type == pygame.K_d:
-            self.movement_queue.append(MOVEMENT.right)
-        elif e.type == pygame.K_LCTRL:
-            self.movement_queue.append(MOVEMENT.down)
-        elif e.type == pygame.K_SPACE:
-            self.movement_queue.append(MOVEMENT.up)
-        elif e.type == pygame.MOUSEMOTION:
-            y = e.rel[1]
-            x = e.rel[0]
-            if x > 0:
-                self.movement_queue.append(MOVEMENT.turn_right)
-            elif x < 0:
-                self.movement_queue.append(MOVEMENT.turn_left)
-            if y > 0:
-                self.movement_queue.append(MOVEMENT.turn_up)
-            elif y < 0:
-                self.movement_queue.append(MOVEMENT.turn_down)
+        # looking (mouse)
+        if e.type == pygame.MOUSEMOTION:
+            self.looking[0] += e.rel[0] * 0.1
+            self.looking[1] += e.rel[1] * 0.1
+
+    def movement(self):
+        looking_x = math.radians(self.looking[0])
+
+        for key in self.game.keys_down:
+            if key in [pygame.K_w, pygame.K_s]:
+                self.change_x += math.cos(looking_x) * (-1 if key == pygame.K_s else 1)
+                self.change_z += math.sin(looking_x) * (-1 if key == pygame.K_s else 1)
+                print(self.change_x, self.change_z)
+            elif key in [pygame.K_a, pygame.K_d]:
+                self.change_x += math.sin(looking_x) * (-1 if key == pygame.K_a else 1)
+                self.change_z += math.cos(looking_x) * (-1 if key == pygame.K_a else 1)
+
+            elif key == pygame.K_SPACE:
+                self.change_y += self.speed
+            elif key == pygame.K_LCTRL:
+                self.change_y -= self.speed
 
     def update(self, delta_time):
-        while len(self.movement_queue):
-            self.caculate_move(self.movement_queue[0])
-            del self.movement_queue[0]
-
         for i in range(2):
             if self.looking[i] > 360:
                 self.looking[i] -= 360
-            elif self.looking[i] < -360:
+            elif self.looking[i] < 0:
                 self.looking[i] += 360
 
-    def caculate_move(self, move):
-        if move == MOVEMENT.turn_left:
-            self.looking[0] -= 0.1
-        elif move == MOVEMENT.turn_right:
-            self.looking[0] += 0.1
-        elif move == MOVEMENT.turn_up:
-            self.looking[1] -= 0.1
-        elif move == MOVEMENT.turn_left:
-            self.looking[1] += 0.1
+        self.movement()
+
+        self.x += self.change_x
+        self.y += self.change_y
+        self.z += self.change_z
+        self.change_x = self.change_y = self.change_z = 0
+
+    def shoot_rays(self):
+        image = [
+            ["." for _2 in range([RAYS[0]])] for _ in range(RAYS[1])
+        ]  # matrix of shape (RAYS[1], RAYS[0])
+
+        for y in range(RAYS[1]):
+            for x in range(RAYS[0]):
+                pass
+
+        return image
+
+    def ray(self, angle):
+        pass
+
+    def draw(self):
+        image = self.shoot_rays()
+
+        column_width_px = SCREEN_WIDTH / RAYS[0]
+        row_height_px = SCREEN_HEIGHT / RAYS[1]
+
+        for y in range(RAYS[1]):
+            for x in range(RAYS[0]):
+                color = (255, 255, 255) if image[y][x] == "#" else (0, 0, 0)
+
+                pygame.draw.rect(
+                    self.game.win,
+                    color,
+                    (
+                        x * column_width_px,
+                        y * row_height_px,
+                        (x + 1) * column_width_px,
+                        (y + 1) * row_height_px,
+                    )
+                )
+
 
     def __repr__(self):
-        return f"<Player @ {(self.x,  self.y, self.z)} 00 ({self.looking})>"
+        return f"<Player @ {(self.x,  self.y, self.z)} OO ({self.looking})>"
