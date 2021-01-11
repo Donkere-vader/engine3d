@@ -18,7 +18,7 @@ class Game:
         self.player = Player(self, 0, 0, 0)
 
         # world
-        self.world = World("room")
+        self.world = World("wall")
 
         # control
         self.keys_down = []

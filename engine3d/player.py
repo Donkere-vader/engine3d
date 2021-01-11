@@ -1,6 +1,7 @@
 from .config import RAYS, SCREEN_WIDTH, SCREEN_HEIGHT
 import pygame
 import math
+from .functions import radian_to
 
 
 class Movement:
@@ -29,12 +30,13 @@ class Player:
         self.x, self.y, self.z = (x, y, z)
         self.looking = [0, 0]
         self.change_x = self.change_y = self.change_z = 0
+        self.ray_ranges = []
 
     def event(self, e):
         # looking (mouse)
         if e.type == pygame.MOUSEMOTION:
-            self.looking[0] += e.rel[0] * 0.1
-            self.looking[1] += e.rel[1] * 0.1
+            self.looking[0] += e.rel[0] * 2
+            self.looking[1] += e.rel[1] * 2
 
     def movement(self):
         looking_x = math.radians(self.looking[0])
@@ -52,6 +54,14 @@ class Player:
                 self.change_y += self.speed
             elif key == pygame.K_LCTRL:
                 self.change_y -= self.speed
+
+    def between_circle_margins(self, num):
+        if num > 360:
+            return num - 260
+        if num < 0:
+            return num + 360
+        return num
+
 
     def update(self, delta_time):
         for i in range(2):
@@ -72,26 +82,57 @@ class Player:
             ["." for _2 in range(RAYS[0])] for _ in range(RAYS[1])
         ]  # matrix of shape (RAYS[1], RAYS[0])
 
+        # calculate ranges for rays
+        self.calculate_ray_ranges()
+
+        # calculate and schoot rays
         y_ray_gap = self.fov // RAYS[1]
-        x_ray_gap = self.fov // RAYS[0]
+        xz_angle = self.fov // RAYS[0]
 
         for y in range(RAYS[1]):
             y_angle = y_ray_gap * y + (y_ray_gap / 2)
             for x in range(RAYS[0]):
-                x_angle = x_ray_gap * x + (x_ray_gap / 2)
+                xz_angle = xz_angle * x + (xz_angle / 2)
 
                 # correct for fov
                 fov_margin = (180 - self.fov) / 2
 
-                x_angle = x_angle + fov_margin
-                y_angle = y_angle + fov_margin
+                xz_angle = self.between_circle_margins(xz_angle + fov_margin + self.looking[0])
+                y_angle = self.between_circle_margins(y_angle + fov_margin + self.looking[1])
 
-                image[y][x] = "#" if self.ray(x_angle, y_angle) else "."
+                image[y][x] = "#" if self.ray(xz_angle, y_angle) else "."
 
         return image
 
-    def ray(self, x_angle, y_angle):
-        return True
+    def ray(self, xz_angle, y_angle) -> bool:
+        """ "Shoots" a ray into the specified direction and returns True if it hits something """
+        xz_angle, y_angle = math.radians(xz_angle) % (2 * math.pi), math.radians(y_angle) % (2 * math.pi)
+
+        # print("\n\n")
+
+        # print(self)
+        # print(xz_angle, y_angle)
+        for rnge in self.ray_ranges:
+            # print(min(rnge[0]), max(rnge[0]), min(rnge[1]), max(rnge[1]))
+            if min(rnge[0]) <= xz_angle <= max(rnge[0]) and min(rnge[1]) <= y_angle <= max(rnge[1]):
+                return True
+
+        return False
+
+    def calculate_ray_ranges(self):
+        self.ray_ranges = []
+
+        for cube in self.game.world.walls:
+            xz_angle_corner_1 = radian_to((self.x, self.z), (cube[0][0], cube[0][2]))
+            y_angle_corner_1 = radian_to((self.y, self.z), (cube[0][1], cube[0][2]))
+            xz_angle_corner_2 = radian_to((self.x, self.z), (cube[1][0], cube[1][2]))
+            y_angle_corner_2 = radian_to((self.y, self.z), (cube[1][1], cube[1][2]))
+            self.ray_ranges.append(
+                (
+                    (xz_angle_corner_1, y_angle_corner_1),
+                    (xz_angle_corner_2, y_angle_corner_2)
+                )
+            )
 
     def draw(self):
         image = self.shoot_rays()
