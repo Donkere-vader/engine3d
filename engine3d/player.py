@@ -113,7 +113,7 @@ class Player:
         """ "Shoots" a ray into the specified direction and returns True if it hits something """
         xz_angle, y_angle = math.radians(self.between_circle_margins(xz_angle)), math.radians(self.between_circle_margins(y_angle))
 
-        y = math.sin(y_angle) * self.render_distance
+        y = math.cos(y_angle) * self.render_distance
         x = math.cos(xz_angle) * y
         z = math.sin(xz_angle) * y
 
@@ -126,7 +126,12 @@ class Player:
             )
         )
 
+        # print(distance_to_3d(line[0], line[1]))
+
+        # print()
+        # print(line)
         for cube in self.game.world.walls:
+            # print(cube.corners)
             intersect, distance = cube.intersect(line)
 
         if intersect:

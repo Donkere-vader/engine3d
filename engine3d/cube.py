@@ -15,8 +15,6 @@ class Cube:
     def __init__(self, corners):
         self.corners = corners
 
-        print(self.corners)
-
     def get_planes(self, x, y, z) -> [((int), (int))]:
         planes = []
 
@@ -49,10 +47,6 @@ class Cube:
         return new_planes
 
     def intersect(self, line):
-
-        # print()
-        # print(self.corners)
-        # print(line)
         planes = self.get_planes(line[0][0], line[0][1], line[0][2])
 
         delta_x = line[0][0] - line[1][0]
@@ -65,19 +59,33 @@ class Cube:
         except ZeroDivisionError:
             return False, 0
 
+        # print(planes)
+        print()
         for axis, plane in enumerate(planes):
             if plane is None:
                 continue
 
             y = plane[0][axis] * y_a + line[0][1]
-            x = y / y_a + line[0][0]
+            # print("yy_a", y, y_a)
+            x = (y - line[0][1]) / y_a
             z = z_a * plane[0][axis] + line[0][2]
 
             intersect_cord = (x, y, z)
 
-            print("checkign")
-            if cord_in_range(intersect_cord, self.corners) and cord_in_range(intersect_cord, line):
-                print("tes")
-                return True, distance_to_3d(line[1], intersect_cord)
+            i = cord_in_range(intersect_cord, self.corners)
+            j = cord_in_range(intersect_cord, line)
+            print(intersect_cord, self.corners)
+            print(i, j)
+            if i and j:
+                print(True)
+            return True, distance_to_3d(line[1], intersect_cord)
 
         return False, 0
+
+if __name__ == "__main__":
+    cube = Cube([(1, 0, 0), (3, 2, 2)])
+    line = [
+        [0, 0, .5],
+        [5, 1, .5]
+    ]
+    print(cube.intersect(line))
