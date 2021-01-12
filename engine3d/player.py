@@ -130,7 +130,10 @@ class Player:
             intersect, distance = cube.intersect(line)
 
         if intersect:
-            return 1 - (self.render_distance / distance)
+            print(distance)
+            x = 1 - (distance / self.render_distance)
+            print(x)
+            return x
 
         return 0
 
