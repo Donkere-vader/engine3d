@@ -73,6 +73,7 @@ class Game:
     def draw(self):
         self.player.draw()
 
+        # MINIMAP
         pygame.draw.rect(
             self.win,
             (255, 255, 255),
@@ -85,20 +86,27 @@ class Game:
             (0, 0, 100, 100)
         )
 
-        for wall in self.world.walls:
+        for cube in self.world.walls:
             pygame.draw.rect(
                 self.win,
                 (255, 255, 255),
-                (wall[0][0], wall[0][1], wall[1][0] - wall[0][0], wall[1][1] - wall[0][1])
+                (
+                    cube.corners[0][0],
+                    cube.corners[0][1],
+                    cube.corners[1][0] - cube.corners[0][0],
+                    cube.corners[1][1] - cube.corners[0][1]
+                )
             )
 
+        # draw player
         pygame.draw.circle(
             self.win,
             (0, 0, 255),
-            (self.player.x, self.player.z),
+            (max(0, self.player.x), max(0, self.player.z)),
             5
         )
 
+        # draw looking direction
         rad_looking = math.radians(self.player.looking[0])
         line_x = math.cos(rad_looking)
         line_z = math.sin(rad_looking)
@@ -112,7 +120,7 @@ class Game:
             (self.player.x + dx, self.player.z + dz)
         )
 
-        # print("\n\n")
+        # draw Rays
         for ray in self.player.ray_angles[0]:
             x_ray = math.radians(ray[0])
             x = math.cos(x_ray)

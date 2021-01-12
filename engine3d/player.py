@@ -1,7 +1,7 @@
 from .config import RAYS, SCREEN_WIDTH, SCREEN_HEIGHT
 import pygame
 import math
-from .functions import radian_to
+from .functions import radian_to, distance_to_3d, translate_triangle, pytagoras
 
 
 class Movement:
@@ -25,13 +25,14 @@ class Player:
     events = [pygame.MOUSEMOTION]
     fov = 90
     mouse_sens = 1.5
+    render_distance = 100
 
     def __init__(self, parent, x, y, z):
         self.game = parent
         self.x, self.y, self.z = (x, y, z)
         self.looking = [0, 0]
         self.change_x = self.change_y = self.change_z = 0
-        self.ray_ranges = []
+        # self.ray_ranges = []
 
     def event(self, e):
         # looking (mouse)
@@ -82,7 +83,7 @@ class Player:
         ]  # matrix of shape (RAYS[1], RAYS[0])
 
         # calculate ranges for rays
-        self.calculate_ray_ranges()
+        # self.calculate_ray_ranges()
 
         # calculate and schoot rays
         y_ray_gap = self.fov // RAYS[1]
@@ -98,23 +99,12 @@ class Player:
                 # correct for fov
                 fov_margin = (180 - self.fov) / 2
 
-                # DEBUG
-                print()
-                print(self.looking)
-                print(fov_margin)
-                print(xz_angle)
-                print(y_angle)
-
                 xz_angle = self.between_circle_margins(xz_angle + fov_margin + (self.looking[0] - 90))
                 y_angle = self.between_circle_margins(y_angle + fov_margin + (self.looking[1] - 90))
 
-                # DEBUG
-                print(xz_angle)
-                print(y_angle)
-
                 self.ray_angles[y][x] = (xz_angle, y_angle)
 
-                image[y][x] = "#" if self.ray(xz_angle, y_angle) else "."
+                image[y][x] = self.ray(xz_angle, y_angle)
                 # print(image[y][x])
 
         return image
@@ -123,28 +113,41 @@ class Player:
         """ "Shoots" a ray into the specified direction and returns True if it hits something """
         xz_angle, y_angle = math.radians(self.between_circle_margins(xz_angle)), math.radians(self.between_circle_margins(y_angle))
 
-        # print(xz_angle, y_angle)
-        for rnge in self.ray_ranges:
-            # print(min(rnge[0]), max(rnge[0]), min(rnge[1]), max(rnge[1]))
-            if min(rnge[0]) <= xz_angle <= max(rnge[0]) and min(rnge[1]) <= y_angle <= max(rnge[1]):
-                return True
+        y = math.sin(y_angle) * self.render_distance
+        x = math.cos(xz_angle) * y
+        z = math.sin(xz_angle) * y
 
-        return False
-
-    def calculate_ray_ranges(self):
-        self.ray_ranges = []
+        line = (
+            (self.x, self.y, self.z),
+            (
+                self.x + x,
+                self.y + y,
+                self.z + z
+            )
+        )
 
         for cube in self.game.world.walls:
-            xz_angle_corner_1 = radian_to((self.x, self.z), (cube[0][0], cube[0][2]))
-            y_angle_corner_1 = radian_to((self.y, self.z), (cube[0][1], cube[0][2]))
-            xz_angle_corner_2 = radian_to((self.x, self.z), (cube[1][0], cube[1][2]))
-            y_angle_corner_2 = radian_to((self.y, self.z), (cube[1][1], cube[1][2]))
-            self.ray_ranges.append(
-                (
-                    (xz_angle_corner_1, y_angle_corner_1),
-                    (xz_angle_corner_2, y_angle_corner_2)
-                )
-            )
+            intersect, distance = cube.intersect(line)
+
+        if intersect:
+            return 1 - (self.render_distance / distance)
+
+        return 0
+
+    # def calculate_ray_ranges(self):
+    #     self.ray_ranges = []
+
+    #     for cube in self.game.world.walls:
+    #         xz_angle_corner_1 = radian_to((self.x, self.z), (cube[0][0], cube[0][2]))
+    #         y_angle_corner_1 = radian_to((self.y, self.z), (cube[0][1], cube[0][2]))
+    #         xz_angle_corner_2 = radian_to((self.x, self.z), (cube[1][0], cube[1][2]))
+    #         y_angle_corner_2 = radian_to((self.y, self.z), (cube[1][1], cube[1][2]))
+    #         self.ray_ranges.append(
+    #             (
+    #                 (xz_angle_corner_1, y_angle_corner_1),
+    #                 (xz_angle_corner_2, y_angle_corner_2)
+    #             )
+    #         )
 
     def draw(self):
         image = self.shoot_rays()
@@ -154,7 +157,7 @@ class Player:
 
         for y in range(RAYS[1]):
             for x in range(RAYS[0]):
-                color = (255, 255, 255) if image[y][x] == "#" else (0, 0, 0)
+                color = (image[y][x] * 255, image[y][x] * 255, image[y][x] * 255) if image[y][x] > 0 else (0, 0, 0)
 
                 pygame.draw.rect(
                     self.game.win,

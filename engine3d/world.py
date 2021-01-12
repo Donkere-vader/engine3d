@@ -1,6 +1,7 @@
 import os
 from .config import BLOCK_SIZE
 from .functions import distance_to_3d
+from .cube import Cube
 
 
 class World:
@@ -9,7 +10,6 @@ class World:
         self.load_word()
 
         self.__walls = None
-        print(self.walls)
 
     def load_word(self):
         with open(self.world_name) as file:
@@ -69,6 +69,12 @@ class World:
         #                 break
 
         #         if changes > 0:
-        #             break
+        #             break  
+
+        new_cubes = []
+        for cube in cubes:
+            new_cubes.append(Cube(cube))
+        cubes = new_cubes
+        del new_cubes
 
         return cubes
