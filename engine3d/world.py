@@ -49,26 +49,26 @@ class World:
                         )
 
         # merge neighbours
-        changes = 1
-        while changes > 0:
-            changes = 0
-            for cube in cubes:
-                for c in cubes:
-                    if cube == c:
-                        continue
-                    distance = abs(distance_to_3d(cube[0], c[0]))
+        # changes = 1
+        # while changes > 0:
+        #     changes = 0
+        #     for cube in cubes:
+        #         for c in cubes:
+        #             if cube == c:
+        #                 continue
+        #             distance = abs(distance_to_3d(cube[0], c[0]))
 
-                    if distance == BLOCK_SIZE:
-                        cubes.remove(cube)
-                        cubes.remove(c)
+        #             if distance == BLOCK_SIZE:
+        #                 cubes.remove(cube)
+        #                 cubes.remove(c)
 
-                        new_cube = (cube[0], c[1])
-                        cubes.append(new_cube)
+        #                 new_cube = (cube[0], c[1])
+        #                 cubes.append(new_cube)
 
-                        changes += 1
-                        break
+        #                 changes += 1
+        #                 break
 
-                if changes > 0:
-                    break
+        #         if changes > 0:
+        #             break
 
         return cubes

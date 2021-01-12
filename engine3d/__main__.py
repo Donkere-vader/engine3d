@@ -3,6 +3,8 @@ from datetime import datetime as dt
 from .config import SCREEN_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT
 from .player import Player
 from .world import World
+from .functions import translate_triangle
+import math
 
 
 class Game:
@@ -15,13 +17,16 @@ class Game:
         self.run = True
 
         # player
-        self.player = Player(self, 0, 0, 0)
+        self.player = Player(self, 45, 10, 50)
+        self.player.looking[0] = 270
 
         # world
         self.world = World("wall")
 
         # control
         self.keys_down = []
+        pygame.event.set_grab(True)
+        pygame.mouse.set_visible(False)
 
     def start(self):
         self.setup()
@@ -56,7 +61,67 @@ class Game:
                 self.keys_down.remove(e.key)
 
     def update(self, delta_time):
+        # stop if q is pressed
+        if pygame.K_q in self.keys_down:
+            self.keys_down.remove(pygame.K_q)
+            self.run = False
+
+        # update player
+        # print(self.world.walls)
         self.player.update(delta_time)
 
     def draw(self):
         self.player.draw()
+
+        pygame.draw.rect(
+            self.win,
+            (255, 255, 255),
+            (0, 0, 101, 101)
+        )
+
+        pygame.draw.rect(
+            self.win,
+            (0, 0, 0),
+            (0, 0, 100, 100)
+        )
+
+        for wall in self.world.walls:
+            pygame.draw.rect(
+                self.win,
+                (255, 255, 255),
+                (wall[0][0], wall[0][1], wall[1][0] - wall[0][0], wall[1][1] - wall[0][1])
+            )
+
+        pygame.draw.circle(
+            self.win,
+            (0, 0, 255),
+            (self.player.x, self.player.z),
+            5
+        )
+
+        rad_looking = math.radians(self.player.looking[0])
+        line_x = math.cos(rad_looking)
+        line_z = math.sin(rad_looking)
+
+        dx, dz = translate_triangle(line_x, line_z, 1, 120)
+
+        pygame.draw.line(
+            self.win,
+            (255, 0, 0),
+            (self.player.x, self.player.z),
+            (self.player.x + dx, self.player.z + dz)
+        )
+
+        # print("\n\n")
+        for ray in self.player.ray_angles[0]:
+            x_ray = math.radians(ray[0])
+            x = math.cos(x_ray)
+            z = math.sin(x_ray)
+            # print(x_ray, x, z)
+            dx, dz = translate_triangle(x, z, 1, 100)
+            pygame.draw.line(
+                self.win,
+                (0, 255, 0),
+                (self.player.x, self.player.z),
+                (self.player.x + dx, self.player.z + dz)
+            )
